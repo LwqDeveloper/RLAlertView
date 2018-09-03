@@ -8,8 +8,9 @@
 
 #import "RLAlertView.h"
 
-static const CGFloat RLAlertviewTitleFont       = 17;
-static const CGFloat RLAlertviewMessageFont     = 15;
+static const CGFloat RLAlertviewTitleFont       = 27;
+static const CGFloat RLAlertviewSubTitleFont    = 17;
+static const CGFloat RLAlertviewMessageFont     = 17;
 static const CGFloat RLAlertviewButtonFont      = 17;
 
 static const CGFloat RLAlertViewLeading         = 25;
@@ -29,7 +30,9 @@ static const CGFloat RLAlertViewContentLeading  = 12;
 @implementation RLAlertView
 
 - (instancetype)initWithTitle:(NSString *)title
+                     subTitle:(NSString *)subTitle
                       message:(NSString *)message
+                   attMessage:(NSAttributedString *)attMessage
                  buttonTitles:(NSArray *)buttonTitles
                    completion:(void(^)(NSInteger buttonIndex))completion
 {
@@ -44,7 +47,7 @@ static const CGFloat RLAlertViewContentLeading  = 12;
         //contentView
         UIView *alertView = [[UIView alloc] initWithFrame:CGRectMake(RLAlertViewLeading, 0, self.bounds.size.width -RLAlertViewLeading *2, 20)];
         alertView.backgroundColor = [UIColor whiteColor];
-        alertView.layer.cornerRadius = 4.0;
+        alertView.layer.cornerRadius = 5.0;
         alertView.clipsToBounds = YES;
         [self addSubview:self.alertView = alertView];
         
@@ -58,42 +61,68 @@ static const CGFloat RLAlertViewContentLeading  = 12;
             topY_ += RLAlertViewContentSpace;
         }
         
-        //message
-        if (message.length > 0) {
-            UILabel *messageLabel = [self addLabelTitle:message color:[UIColor darkGrayColor] font:[UIFont systemFontOfSize:RLAlertviewMessageFont]];
-            [self rl_resetView:messageLabel frameKey:@"y" value:topY_];
-            topY_ += messageLabel.bounds.size.height;
+        //subTitle
+        if (subTitle.length > 0) {
+            UILabel *titleLabel = [self addLabelTitle:subTitle color:[UIColor blackColor] font:[UIFont systemFontOfSize:RLAlertviewSubTitleFont]];
+            [self rl_resetView:titleLabel frameKey:@"y" value:topY_];
+            topY_ += titleLabel.bounds.size.height;
             topY_ += RLAlertViewContentSpace;
         }
 
+        //message
+        if (message.length > 0 || attMessage.string.length > 0) {
+            UITextView *messageView = [[UITextView alloc] initWithFrame:CGRectMake(RLAlertViewContentLeading, topY_, self.alertView.bounds.size.width -RLAlertViewContentLeading *2, 20)];
+            if (message.length > 0) {
+                messageView.text = message;
+            } else if (attMessage.string.length > 0) {
+                messageView.attributedText = attMessage;
+            }
+            messageView.font = [UIFont systemFontOfSize:RLAlertviewMessageFont];
+            messageView.textColor = [UIColor darkGrayColor];
+            messageView.editable = NO;
+            messageView.showsVerticalScrollIndicator = NO;
+            [self.alertView addSubview:messageView];
+
+            CGFloat maxMessageViewHeight = self.bounds.size.height -130*2 -RLAlertViewButtonHeight -topY_;
+            CGFloat messageContentHeight = [self heightForTextView:messageView width:messageView.bounds.size.width];
+            if (messageContentHeight <= maxMessageViewHeight) {
+                [self rl_resetView:messageView frameKey:@"height" value:messageContentHeight];
+            } else {
+                [self rl_resetView:messageView frameKey:@"height" value:maxMessageViewHeight];
+            }
+            topY_ += messageView.bounds.size.height;
+            topY_ += RLAlertViewContentSpace;
+        }
         
         //buttons
-        for (NSInteger i = 0; i < buttonTitles.count; i ++) {
-            UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
-            button.tag = 100 +i;
-            button.frame = CGRectMake(alertView.bounds.size.width /buttonTitles.count *i, topY_, alertView.bounds.size.width /buttonTitles.count, RLAlertViewButtonHeight);
-            button.titleLabel.font = [UIFont systemFontOfSize:RLAlertviewButtonFont];
-            [button setTitle:buttonTitles[i] forState:UIControlStateNormal];
-            button.titleLabel.adjustsFontSizeToFitWidth = YES;
-            [button setTitleColor:[UIColor darkGrayColor] forState:UIControlStateNormal];
-            button.backgroundColor = [UIColor clearColor];
-            [button addTarget:self action:@selector(buttonTap:) forControlEvents:UIControlEventTouchUpInside];
-            [button addTarget:self action:@selector(setBackgroundColorForButton:) forControlEvents:UIControlEventTouchDown];
-            [button addTarget:self action:@selector(setBackgroundColorForButton:) forControlEvents:UIControlEventTouchDragEnter];
-            [button addTarget:self action:@selector(clearBackgroundColorForButton:) forControlEvents:UIControlEventTouchDragExit];
-            [alertView addSubview:button];
-            
-            //v line
-            if (i > 0) {
-                UIView *vLine = [self lineFrame:CGRectMake(0, 0, RLAlertViewLineWidth, button.bounds.size.height)];
-                [button addSubview:vLine];
+        if (buttonTitles.count > 0) {
+            for (NSInteger i = 0; i < buttonTitles.count; i ++) {
+                UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+                button.tag = 100 +i;
+                button.frame = CGRectMake(alertView.bounds.size.width /buttonTitles.count *i, topY_, alertView.bounds.size.width /buttonTitles.count, RLAlertViewButtonHeight);
+                button.titleLabel.font = [UIFont systemFontOfSize:RLAlertviewButtonFont];
+                [button setTitle:buttonTitles[i] forState:UIControlStateNormal];
+                button.titleLabel.adjustsFontSizeToFitWidth = YES;
+                [button setTitleColor:[UIColor darkGrayColor] forState:UIControlStateNormal];
+                button.backgroundColor = [UIColor clearColor];
+                [button addTarget:self action:@selector(buttonTap:) forControlEvents:UIControlEventTouchUpInside];
+                [button addTarget:self action:@selector(setBackgroundColorForButton:) forControlEvents:UIControlEventTouchDown];
+                [button addTarget:self action:@selector(setBackgroundColorForButton:) forControlEvents:UIControlEventTouchDragEnter];
+                [button addTarget:self action:@selector(clearBackgroundColorForButton:) forControlEvents:UIControlEventTouchDragExit];
+                [alertView addSubview:button];
+                
+                //v line
+                if (i > 0) {
+                    UIView *vLine = [self lineFrame:CGRectMake(0, 0, RLAlertViewLineWidth, button.bounds.size.height)];
+                    [button addSubview:vLine];
+                }
             }
+            //h line
+            UIView *hLine = [self lineFrame:CGRectMake(0, topY_, alertView.bounds.size.width, RLAlertViewLineWidth)];
+            [alertView addSubview:hLine];
+            
+            topY_ += RLAlertViewButtonHeight;
         }
-        //h line
-        UIView *hLine = [self lineFrame:CGRectMake(0, topY_, alertView.bounds.size.width, RLAlertViewLineWidth)];
-        [alertView addSubview:hLine];
-        
-        topY_ += RLAlertViewButtonHeight;
         [self rl_resetView:self.alertView frameKey:@"height" value:topY_];
     }
     return self;
@@ -164,6 +193,22 @@ static const CGFloat RLAlertViewContentLeading  = 12;
     return line;
 }
 
+- (CGFloat)heightForTextView:(UITextView *)textView width:(float)width{
+    CGSize sizeToFit = [textView sizeThatFits:CGSizeMake(width, MAXFLOAT)];
+    return sizeToFit.height;
+}
+
+
+- (CGFloat)heightOfText:(NSString *)text font:(UIFont *)font width:(CGFloat)width
+{
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, width, 20)];
+    label.text = text;
+    label.font = font;
+    label.numberOfLines = 0;
+    [label sizeToFit];
+    return label.frame.size.height;
+}
+
 #pragma mark -
 + (instancetype)showAlertWithTitle:(NSString *)title
                         completion:(void(^)(NSInteger buttonIndex))completion
@@ -189,8 +234,20 @@ static const CGFloat RLAlertViewContentLeading  = 12;
                       buttonTitles:(NSArray *)buttonTitles
                         completion:(void(^)(NSInteger buttonIndex))completion
 {
+    return [self showAlertWithTitle:title subTitle:nil message:message attMessage:nil buttonTitles:buttonTitles completion:completion];
+}
+
++ (instancetype)showAlertWithTitle:(NSString *)title
+                          subTitle:(NSString *)subTitle
+                           message:(NSString *)message
+                        attMessage:(NSAttributedString *)attMessage
+                      buttonTitles:(NSArray *)buttonTitles
+                        completion:(void(^)(NSInteger buttonIndex))completion
+{
     RLAlertView *alertView = [[self alloc] initWithTitle:title
+                                                subTitle:subTitle
                                                  message:message
+                                              attMessage:attMessage
                                             buttonTitles:buttonTitles
                                               completion:completion];
     [alertView rl_showInView:[[UIApplication sharedApplication] keyWindow]];

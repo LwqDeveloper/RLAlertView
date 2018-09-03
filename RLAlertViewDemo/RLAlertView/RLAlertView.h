@@ -25,4 +25,11 @@
                       buttonTitles:(NSArray *)buttonTitles
                         completion:(void(^)(NSInteger buttonIndex))completion;
 
++ (instancetype)showAlertWithTitle:(NSString *)title
+                          subTitle:(NSString *)subTitle
+                           message:(NSString *)message
+                        attMessage:(NSAttributedString *)attMessage
+                      buttonTitles:(NSArray *)buttonTitles
+                        completion:(void(^)(NSInteger buttonIndex))completion;
+
 @end
