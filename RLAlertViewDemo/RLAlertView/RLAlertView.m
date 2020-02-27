@@ -70,6 +70,10 @@ static const CGFloat RLAlertViewContentLeading  = 12;
         }
 
         //message
+        if ([attMessage isKindOfClass:[NSString class]]) {
+            attMessage = [[NSAttributedString alloc] initWithString:(NSString *)attMessage];
+        }
+        
         if (message.length > 0 || attMessage.string.length > 0) {
             UITextView *messageView = [[UITextView alloc] initWithFrame:CGRectMake(RLAlertViewContentLeading, topY_, self.alertView.bounds.size.width -RLAlertViewContentLeading *2, 20)];
             if (message.length > 0) {
